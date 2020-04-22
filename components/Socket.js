@@ -1,5 +1,9 @@
 import React, { Component } from 'react';
-import { View, Text, Button, TextInput, StyleSheet } from 'react-native';
+import { View, Text, Button, TextInput, StyleSheet, Image } from 'react-native';
+import ImagePickerExample from '../screens/Imagenes'
+import * as ImagePicker from 'expo-image-picker';
+import Constants from 'expo-constants';
+import * as Permissions from 'expo-permissions';
 
 function UselessTextInput(props) {
   return (
@@ -20,6 +24,7 @@ export default class Socket extends Component {
       open: false,
       text: '',
       txtMensajes: '',
+      image: null,
     };
 
     this.ws = new WebSocket('ws://192.168.0.106:8080/webSocket/chat');
@@ -102,9 +107,10 @@ export default class Socket extends Component {
           title={'enviar'}
           color="#1480FF"
         />
+
+        <ImagePickerExample />
       </View>
       
     );
   }
 }
- 
