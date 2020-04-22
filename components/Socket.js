@@ -1,9 +1,8 @@
 import React, { Component } from 'react';
-import { View, Text, Button, TextInput, StyleSheet, Image } from 'react-native';
+import { View, Text, Button, TextInput, Alert, Image, AsyncStorage } from 'react-native';
 import ImagePickerExample from '../screens/Imagenes'
-import * as ImagePicker from 'expo-image-picker';
-import Constants from 'expo-constants';
-import * as Permissions from 'expo-permissions';
+import { ScrollView } from 'react-native-gesture-handler';
+import Toast from 'react-native-simple-toast';
 
 function UselessTextInput(props) {
   return (
@@ -25,6 +24,8 @@ export default class Socket extends Component {
       text: '',
       txtMensajes: '',
       image: null,
+      usr: '',
+      date: '',
     };
 
     this.ws = new WebSocket('ws://192.168.0.106:8080/webSocket/chat');
@@ -34,18 +35,36 @@ export default class Socket extends Component {
     console.log('Constructor Called');
   }
 
+  alertarConexion() {
+    Toast.show('Bienvenido ' + this.state.usr);
+    this.ws.send(this.state.usr + ': en línea');
+    AsyncStorage.getItem('IDMENSAJES1', (err, result) => {
+      this.setState({ txtMensajes: this.state.txtMensajes + '\n' + result });
+    });
+  }
+
+  alertarDesconexion() {
+    this.ws.send(this.state.usr  + ': últ. vez hoy a las '+ this.state.date + ' p.m.');
+    AsyncStorage.setItem('IDMENSAJES1', this.state.txtMensajes);
+  }
+
   emit() {
     this.setState(prevState => ({
       open: !prevState.open,
     }));
     this.ws.send('telefono');
   }
-  xd = () => {
-    this.setState({
-      usr: this.props.navigation.getParam("username"),
-    });
-  };
+  
   componentDidMount() {
+    var hours = new Date().getHours();
+    var min = new Date().getMinutes(); //Current Minutes
+    var sec = new Date().getSeconds(); //Current Seconds
+    this.setState({
+      //Setting the value of the date time
+      date:
+        hours + ':' + min + ':' + sec,
+    });
+
     this.ws.onopen = () => {
       console.log('Start Connection');
     };
@@ -61,56 +80,62 @@ export default class Socket extends Component {
     this.ws.onclose = e => {
       console.log('onclose', e.code, e.reason);
     };
-    this.xd();
+    this.setState({
+      usr: this.props.navigation.getParam("username"),
+    });
   }
   render() {
     return (
-      <View style={{ margin: 10, paddingTop: 30 }}>
-        <View>
-          <Text style={{ fontSize: 20, fontWeight: "bold" }}>
-            Welcome, {this.props.navigation.getParam("username")}
-          </Text>
-          <Button
-            title="Sign out"
-            onPress={() => this.props.navigation.navigate("Login")}
-          />
-        </View>
-        <View > 
-          <Button
-          onPress={() => this.ws.onopen()}
-          title= 'conectar'
-          color = '#24E612'
-          />
-          <Button style={{padding: 20 }}
-          onPress={() => this.ws.close()}
-          title = 'Desconectar'
-          color = "red"
-          />
-        </View>
-        <View style={{ backgroundColor: '#fff' }}>
+      <ScrollView>
+        <View style={{ margin: 10, paddingTop: 30 }}>
+          <View>
+            <Text style={{ fontSize: 20, fontWeight: "bold" }}>
+              Welcome, {this.props.navigation.getParam("username")}
+            </Text>
+            <Button
+              title="Sign out"
+              onPress={() => this.props.navigation.navigate("Login")}
+            />
+          </View>
+          <View > 
+            <Button
+            onPress={() => this.alertarConexion()} 
+            title="Conectar"
+            color = '#24E612'
+            />
+            <Button style={{padding: 20 }}
+            onPress={() => this.alertarDesconexion()}
+            title = 'Desconectar'
+            color = "red"
+            />
+          </View>
+          <View style={{ backgroundColor: '#fff' }}>
+            <TextInput
+              multiline={true}
+              numberOfLines={10}
+              onChangeText={txtMensajes => this.state.usr({ txtMensajes })}
+              value={this.state.txtMensajes}
+              editable={false} 
+              placeholder="Usuario: "
+            />
+          </View>
           <TextInput
-            multiline
-            numberOfLines={10}
-            onChangeText={txtMensajes => this.props.navigation.getParam("username")({ txtMensajes })}
-            value={this.state.txtMensajes}
-            editable={false} 
+            style={{ height: 40, marginTop: 10, backgroundColor: "#eeeeee", borderRadius: 15 }}
+            placeholder="Escribe un mensaje"
+            onChangeText={text => this.setState({ text })}
+            defaultValue={this.state.text}
+          />
+          <Button
+            onPress={() => this.ws.send(this.state.usr + ': ' + this.state.text)}
+            title={'enviar'}
+            color="#1480FF"
+          />
+
+          <ImagePickerExample
+            testProp={this.state.usr}
           />
         </View>
-        <TextInput
-          style={{ height: 40, marginTop: 10, backgroundColor: "#eeeeee", borderRadius: 15 }}
-          placeholder="Escribe un mensaje"
-          onChangeText={text => this.setState({ text })}
-          defaultValue={this.state.text}
-        />
-        <Button
-          onPress={() => this.ws.send(this.state.usr + ': ' + this.state.text)}
-          title={'enviar'}
-          color="#1480FF"
-        />
-
-        <ImagePickerExample />
-      </View>
-      
+      </ScrollView>
     );
   }
 }

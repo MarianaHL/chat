@@ -35,6 +35,8 @@ export default class LoginScreen extends Component {
   render() {
     return (
       <View style={styles.container}>
+        <Text style={{ fontSize: 30, fontWeight: "bold" }}>CHAT-MAR</Text>
+        <Image source={require('../assets/informacion.png')} style={{width: 300, height: 300}} />
         <Button title="Login with Google" onPress={this.signInWithGoogle} />
       </View>
     );
